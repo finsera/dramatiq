@@ -41,7 +41,7 @@ class Actor:
         and middleware.
     """
 
-    def __init__(self, fn, *, broker, actor_name, queue_name, priority, options):
+    def __init__(self, fn, *, broker, actor_name, queue_name, priority, options, add_message_to_kwargs):
         self.logger = get_logger(fn.__module__, actor_name)
         self.fn = fn
         self.broker = broker
@@ -50,6 +50,7 @@ class Actor:
         self.priority = priority
         self.options = options
         self.broker.declare_actor(self)
+        self.add_message_to_kwargs = add_message_to_kwargs
 
     def message(self, *args, **kwargs):
         """Build a message.  This method is useful if you want to
@@ -162,7 +163,8 @@ class Actor:
         return "Actor(%(actor_name)s)" % vars(self)
 
 
-def actor(fn=None, *, actor_class=Actor, actor_name=None, queue_name="default", priority=0, broker=None, **options):
+def actor(fn=None, *, actor_class=Actor, actor_name=None, queue_name="default", priority=0, broker=None,
+          add_message_to_kwargs: bool = False, **options):
     """Declare an actor.
 
     Examples:
@@ -199,12 +201,15 @@ def actor(fn=None, *, actor_class=Actor, actor_name=None, queue_name="default", 
         priority than the other then it will be processed first.
         Lower numbers represent higher priorities.
       broker(Broker): The broker to use with this actor.
+      add_message_to_kwargs(bool): Add the message itself under  "message"
+      key in the kwargs passed to the actor
       **options(dict): Arbitrary options that vary with the set of
         middleware that you use.  See ``get_broker().actor_options``.
 
     Returns:
       Actor: The decorated function.
     """
+
     def decorator(fn):
         nonlocal actor_name, broker
         actor_name = actor_name or fn.__name__
@@ -219,13 +224,14 @@ def actor(fn=None, *, actor_class=Actor, actor_name=None, queue_name="default", 
         if invalid_options:
             invalid_options_list = ", ".join(invalid_options)
             raise ValueError((
-                "The following actor options are undefined: %s. "
-                "Did you forget to add a middleware to your Broker?"
-            ) % invalid_options_list)
+                                 "The following actor options are undefined: %s. "
+                                 "Did you forget to add a middleware to your Broker?"
+                             ) % invalid_options_list)
 
         return actor_class(
             fn, actor_name=actor_name, queue_name=queue_name,
-            priority=priority, broker=broker, options=options,
+            priority=priority, broker=broker, add_message_to_kwargs=add_message_to_kwargs,
+            options=options,
         )
 
     if fn is None:

@@ -467,7 +467,13 @@ class _WorkerThread(Thread):
             res = None
             if not message.failed:
                 actor = self.broker.get_actor(message.actor_name)
-                res = actor(*message.args, **message.kwargs)
+
+                kwargs = message.kwargs
+                if actor.add_message_to_kwargs:
+                    kwargs = dict(message.kwargs)
+                    kwargs["message"] = message
+
+                res = actor(*message.args, **kwargs)
 
             self.broker.emit_after("process_message", message, result=res)
 
