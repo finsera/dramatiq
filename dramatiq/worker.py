@@ -471,7 +471,7 @@ class _WorkerThread(Thread):
                 kwargs = message.kwargs
                 if actor.add_message_to_kwargs:
                     kwargs = dict(message.kwargs)
-                    kwargs["message"] = message
+                    kwargs["message"] = message._message
 
                 res = actor(*message.args, **kwargs)
 
