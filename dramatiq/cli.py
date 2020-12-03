@@ -57,7 +57,7 @@ BUFSIZE = 65536
 CPUS = multiprocessing.cpu_count()
 
 #: The logging format.
-LOGFORMAT = "[%(asctime)s] [PID %(process)d] [%(threadName)s] [%(name)s] [%(levelname)s] %(message)s"
+LOGFORMAT = "[%(asctime)s] [PIID %(process)d] [%(threadName)s] [%(name)s] %(jobid)s] [%(levelname)s] %(message)s"
 
 #: The logging verbosity levels.
 VERBOSITY = {
