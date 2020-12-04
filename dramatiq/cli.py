@@ -251,13 +251,19 @@ def remove_pidfile(filename, logger):
     except FileNotFoundError:  # pragma: no cover
         logger.debug("Failed to remove PID file. It's gone.")
 
+def jobidFilter(record):
+    record.jobid = "0"
+    return True
 
 def setup_parent_logging(args, *, stream=sys.stderr):
     level = VERBOSITY.get(args.verbose, logging.DEBUG)
     if not args.skip_logging:
         logging.basicConfig(level=level, format=LOGFORMAT, stream=stream)
-
-    return get_logger("dramatiq", "MainProcess")
+    logger = get_logger("dramatiq", "MainProcess")
+    jobidhandler = logging.StreamHandler()
+    jobidhandler.addFilter(jobidFilter)
+    logger.addHandler(jobidhandler)
+    return logger 
 
 
 def make_logging_setup(prefix):
