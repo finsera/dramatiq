@@ -174,7 +174,8 @@ def make_argument_parser():
     parser.add_argument(
         "--skip-logging",
         action="store_true",
-        help="do not call logging.basicConfig()"
+        help="do not call logging.
+        ()"
     )
     parser.add_argument(
         "--use-spawn", action="store_true",
@@ -273,7 +274,7 @@ def setup_parent_logging(args, *, stream=sys.stderr):
     formatter = CustomFormatter(LOGFORMAT)
     handler.setFormatter(formatter)
     if not args.skip_logging:
-        logging.basicConfig(level=level, format=LOGFORMAT, stream=stream, handlers=[
+        logging.basicConfig(level=level, format=LOGFORMAT, handlers=[
         handler,
     ])
     logger = get_logger("dramatiq", "MainProcess")
@@ -296,7 +297,7 @@ def make_logging_setup(prefix):
         handler.setFormatter(formatter)
     
         if not args.skip_logging:
-            logging.basicConfig(level=level, format=LOGFORMAT, stream=logging_pipe, handlers=[
+            logging.basicConfig(level=level, format=LOGFORMAT, handlers=[
         handler,
     ])
 
