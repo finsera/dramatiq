@@ -255,10 +255,27 @@ def jobidFilter(record):
     record.jobid = "0"
     return True
 
+
+class CustomFormatter(logging.Formatter):
+
+    def format(self, record: logging.LogRecord) -> str:
+        arg_pattern = re.compile(r'%\((\w+)\)')
+        arg_names = [x.group(1) for x in arg_pattern.finditer(self._fmt)]
+        for field in arg_names:
+            if field not in record.__dict__:
+                record.__dict__[field] = None
+
+        return super().format(record)
+
 def setup_parent_logging(args, *, stream=sys.stderr):
     level = VERBOSITY.get(args.verbose, logging.DEBUG)
+    handler = logging.StreamHandler()
+    formatter = CustomFormatter(LOGFORMAT)
+    handler.setFormatter(formatter)
     if not args.skip_logging:
-        logging.basicConfig(level=level, format=LOGFORMAT, stream=stream)
+        logging.basicConfig(level=level, format=LOGFORMAT, stream=stream, handlers=[
+        handler,
+    ])
     logger = get_logger("dramatiq", "MainProcess")
     jobidhandler = logging.StreamHandler()
     jobidhandler.addFilter(jobidFilter)
@@ -274,8 +291,14 @@ def make_logging_setup(prefix):
         sys.stderr = logging_pipe
 
         level = VERBOSITY.get(args.verbose, logging.DEBUG)
+        handler = logging.StreamHandler()
+        formatter = CustomFormatter(LOGFORMAT)
+        handler.setFormatter(formatter)
+    
         if not args.skip_logging:
-            logging.basicConfig(level=level, format=LOGFORMAT, stream=logging_pipe)
+            logging.basicConfig(level=level, format=LOGFORMAT, stream=logging_pipe, handlers=[
+        handler,
+    ])
 
         logging.getLogger("pika").setLevel(logging.CRITICAL)
         logger = get_logger("dramatiq", "%s(%s)" % (prefix, child_id))
