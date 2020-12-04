@@ -174,8 +174,7 @@ def make_argument_parser():
     parser.add_argument(
         "--skip-logging",
         action="store_true",
-        help="do not call logging.
-        ()"
+        help="do not call logging.()"
     )
     parser.add_argument(
         "--use-spawn", action="store_true",
