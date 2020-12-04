@@ -278,7 +278,11 @@ def make_logging_setup(prefix):
             logging.basicConfig(level=level, format=LOGFORMAT, stream=logging_pipe)
 
         logging.getLogger("pika").setLevel(logging.CRITICAL)
-        return get_logger("dramatiq", "%s(%s)" % (prefix, child_id))
+        logger = get_logger("dramatiq", "%s(%s)" % (prefix, child_id))
+        jobidhandler = logging.StreamHandler()
+        jobidhandler.addFilter(jobidFilter)
+        logger.addHandler(jobidhandler)
+        return logger
 
     return setup_logging
 
