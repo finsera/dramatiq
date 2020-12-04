@@ -252,11 +252,6 @@ def remove_pidfile(filename, logger):
     except FileNotFoundError:  # pragma: no cover
         logger.debug("Failed to remove PID file. It's gone.")
 
-def jobidFilter(record):
-    record.jobid = "0"
-    return True
-
-
 class CustomFormatter(logging.Formatter):
 
     def format(self, record: logging.LogRecord) -> str:
@@ -277,11 +272,8 @@ def setup_parent_logging(args, *, stream=sys.stderr):
         logging.basicConfig(level=level, format=LOGFORMAT, handlers=[
         handler,
     ])
-    logger = get_logger("dramatiq", "MainProcess")
-    jobidhandler = logging.StreamHandler()
-    jobidhandler.addFilter(jobidFilter)
-    logger.addHandler(jobidhandler)
-    return logger 
+
+    return get_logger("dramatiq", "MainProcess")
 
 
 def make_logging_setup(prefix):
@@ -302,11 +294,7 @@ def make_logging_setup(prefix):
     ])
 
         logging.getLogger("pika").setLevel(logging.CRITICAL)
-        logger = get_logger("dramatiq", "%s(%s)" % (prefix, child_id))
-        jobidhandler = logging.StreamHandler()
-        jobidhandler.addFilter(jobidFilter)
-        logger.addHandler(jobidhandler)
-        return logger
+        return get_logger("dramatiq", "%s(%s)" % (prefix, child_id))
 
     return setup_logging
 
