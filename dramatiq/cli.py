@@ -26,6 +26,7 @@ import logging
 import multiprocessing
 import os
 import random
+import re
 import signal
 import sys
 import time
@@ -58,6 +59,8 @@ CPUS = multiprocessing.cpu_count()
 
 #: The logging format.
 LOGFORMAT = "[%(asctime)s] [PID %(process)d] [%(threadName)s] [%(name)s] [%(levelname)s] %(message)s"
+
+ARG_PATTERN = re.compile(r'%\((\w+)\)')
 
 #: The logging verbosity levels.
 VERBOSITY = {
@@ -184,6 +187,11 @@ def make_argument_parser():
         "--fork-function", "-f", action="append", dest="forks", default=[],
         help="fork a subprocess to run the given function"
     )
+    parser.add_argument(
+        "--log-format", "-F", type=str,
+        help="overwrites the default log-format"
+    )
+
 
     if HAS_WATCHDOG:
         parser.add_argument(
@@ -252,10 +260,24 @@ def remove_pidfile(filename, logger):
         logger.debug("Failed to remove PID file. It's gone.")
 
 
+class MissingFieldFormatter(logging.Formatter):
+
+    def format(self, record: logging.LogRecord) -> str:
+        arg_names = [x.group(1) for x in ARG_PATTERN.finditer(self._fmt)]
+        for field in arg_names:
+            if field not in record.__dict__:
+                record.__dict__[field] = None
+
+        return super().format(record)
+
+
 def setup_parent_logging(args, *, stream=sys.stderr):
     level = VERBOSITY.get(args.verbose, logging.DEBUG)
+    handler = logging.StreamHandler()
+    formatter = MissingFieldFormatter(LOGFORMAT)
+    handler.setFormatter(formatter)
     if not args.skip_logging:
-        logging.basicConfig(level=level, format=LOGFORMAT, stream=stream)
+        logging.basicConfig(level=level, format=LOGFORMAT, handlers=[handler])
 
     return get_logger("dramatiq", "MainProcess")
 
@@ -266,10 +288,13 @@ def make_logging_setup(prefix):
         # to stderr and output is serialized so there isn't any mangling.
         sys.stdout = logging_pipe
         sys.stderr = logging_pipe
+        handler = logging.StreamHandler()
+        formatter = MissingFieldFormatter(LOGFORMAT)
+        handler.setFormatter(formatter)
 
         level = VERBOSITY.get(args.verbose, logging.DEBUG)
         if not args.skip_logging:
-            logging.basicConfig(level=level, format=LOGFORMAT, stream=logging_pipe)
+            logging.basicConfig(level=level, format=LOGFORMAT, handlers=[handler])
 
         logging.getLogger("pika").setLevel(logging.CRITICAL)
         return get_logger("dramatiq", "%s(%s)" % (prefix, child_id))
@@ -425,6 +450,10 @@ def main(args=None):  # noqa
     args = args or make_argument_parser().parse_args()
     for path in args.path:
         sys.path.insert(0, path)
+
+    if args.log_format:
+        global LOGFORMAT
+        LOGFORMAT = args.log_format
 
     if args.use_spawn:
         multiprocessing.set_start_method("spawn")
