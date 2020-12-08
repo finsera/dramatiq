@@ -58,7 +58,7 @@ BUFSIZE = 65536
 CPUS = multiprocessing.cpu_count()
 
 #: The logging format.
-LOGFORMAT = "[%(asctime)s] [PID %(process)d] [%(threadName)s] [%(name)s] [%(jobid)s] [%(levelname)s] %(message)s"
+LOGFORMAT = "[%(asctime)s] [PID %(process)d] [%(threadName)s] [%(name)s] [%(levelname)s] %(message)s"
 
 ARG_PATTERN = re.compile(r'%\((\w+)\)')
 
@@ -189,7 +189,7 @@ def make_argument_parser():
     )
     parser.add_argument(
         "--log-format", "-F", type=str,
-        help="log-format that overwrites the default one"
+        help="overwrites the default log-format"
     )
 
 
